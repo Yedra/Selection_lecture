@@ -8,9 +8,9 @@ output:
 ---
 
 ---
-title: "Variation in patterns of selection and nonlinear selection estimates"
+title: "Variation in patterns of selection and nonlinear selection"
 author: "Yedra García"
-date: "9 April 2024"
+date: "9 April 2026"
 output: pdf_document
 fig_caption: yes
 ---
@@ -20,40 +20,43 @@ knitr::opts_chunk$set(echo = TRUE)
 #install.packages("nameofthepackage")
 library(knitr)
 library(dplyr)
+library(reshape2)
 ```
 
-## Variation in patterns of selection
+## Spatiotemporal variation in phenotypic selection
 
-Individuals living in different populations may experience varying selective pressures which can lead to variation in the individuals trait values and/or in the individuals fitness ultimately affecting patterns of selection. For instance, the abundance and composition of pollinators, herbivores or predators often vary locally. Similarly, variation in abiotic selective pressures such as nutrient availability, soil moisture or temperature may also differ in space and time. We thus might be interested in comparing how phenotypic selection is acting on different populations.   
+Environmental variation is expected to generate variation in patterns of selection over time and space. For instance, individuals from different populations may experience varying selective environments and pressures, such as different pollinators, herbivores and predators. These fluctuating selective environments can lead to variation in individuals trait values and in the individuals fitness, ultimately altering the relationship between phenotypic traits and fitness (i.e. selection). The opportunity for selection, $I$ (variance in relative fitness $I = var(\frac{W}{\bar{W}})$) may thus also vary across different environments.
 
-In addition to variation in selective pressures, the opportunity for selection $I$ (variance in relative fitness $I = var(\frac{W}{\bar{W}})$) may also differ between populations.
+Similarly, the abiotic environment (nutrient availability, soil moisture, temperature) may also vary in space and time, even within the same population, potentially altering the strength and mode of selection. Thus, in order to understand how fluctuations in selection may influence biodiversity, we need to address the spatial and temporal scales at which selection varies (Albertsen et al. 2021). 
 
-In order to compare how does the direction and strength of selection vary among populations (it could also be among years or experimental treatments), we use the regression approach by Lande and Arnold 1983 to estimate phenotypic linear selection gradients $\beta$ for each trait in each population followed by analysis of covariance (ANCOVA) to test for differences in selection gradients $\beta$ across populations (years or treatments).
+Typically, selection studies addressing spatiotemporal variation in selection have followed the regression approach by Lande and Arnold (1983) to estimate phenotypic linear selection gradients $\beta$ for each trait in each environment (e.g. population, year, experimental treatment) followed by analysis of covariance (ANCOVA) to test for differences in mean selection gradients $\beta$ among different environments.
 
-Notice that we scale the traits for each population separately. In the same way as we do for trait standardization, we estimate the relative fitness $w = W/\bar{W}$ for each population, this is dividing individual fitness by its population's mean fitness. 
+Recent approaches, as the one proposed by Albertsen et al. (2021), now allow to comprehensively address variation in phenotypic selection over time and space by accounting for the uncertainty associated to any estimate of phenotypic selection and thus quantifying the magnitude of variation in selection.
+
+Here, we will use a dataset from an selection study on different experimental populations (treatments) of the plant common morning glory, to address variation in phenotypic selection.
 
 ## Exercise 1: Selection on *Ipomoea purpurea* floral traits under water deficit
 
-In this study by Garcia et al. (2023), we set up a common garden study with the common morning glory $Ipomoea$ $purpurea$. We studied phenotypic selection in three different experimental populations or treatments consisting on 1) well-watered plants (watered every other day) exposed to open pollination and which we called $control$ treatment 2) plants under water deficit named $drought$ treatment and 3) well-watered plants but with restricted access to pollinators, called $pollinator$ $restriction$ treatment. The motivation of this study was to address whether two selective agents on floral traits such as pollinators and abiotic resources (water availability) which are predicted to change within a context of global change (pollinator decline and increasing droughts) may have an impact on phenotypic selection on flowers.
+In this study by Garcia et al. (2023), we set up a common garden with the common morning glory $Ipomoea$ $purpurea$. We studied phenotypic selection in three different experimental populations or treatments consisting on 1) well-watered plants (watered every other day) exposed to open pollination and which we called $control$ treatment, 2) plants under water deficit named $drought$ treatment, and 3) well-watered plants with restricted access to pollinators, called $pollinator$ $restriction$ treatment. The motivation of this study was to address whether two selective agents on floral traits such as pollinators and abiotic resources (water availability) that are expected to change within a context of global change (pollinator decline and increasing droughts) may have an impact on phenotypic selection on floral traits related to plant pollination.
 
-During the flowering season, we measured several phenotypic traits that function as floral signals and rewards to pollinators including flower size, nectar volume and concentration and plant size, which was estimated from the diameter of the plant's main stem. We counted the number of fruits and estimated seed set (mean number of seeds per fruit multiplied by fruits) as a reproductive fitness measure.
+During the flowering season, we measured several phenotypic traits that function as floral signals and rewards to pollinators including flower size, nectar volume and concentration, and plant size (estimated from the diameter of the plant's main stem). We counted the number of fruits and estimated seed set (mean number of seeds per fruit multiplied by fruits) as a reproductive fitness measure.
 
 \pagebreak
 
 ```{r}
-ipo<-read.csv("ipomoea_data.csv")
+ipo= read.csv("ipomoea_data.csv")
 head(ipo)
-ipo$Treatment<-as.factor(ipo$Treatment)
+ipo$Treatment= as.factor(ipo$Treatment)
 ipo[1:5, 7:12]# the phenotypic traits 
 ```
 
-#Check trait correlations
+#Phenotypic correlations between pairs of traits
 ```{r}
 cor.ipo= cor(ipo[,c(7:10, 12)], use="pairwise")
 signif(cor.ipo, 2)
 ```
 
-#Explore the data in each experimental population
+#Explore the data in each experimental population (treatment)
 ```{r, fig.height=4, fig.width=14}
 #In the control treatment (well-watered plants)
 control= ipo %>%
@@ -71,6 +74,7 @@ plot(control$diameter, control$seedset)
 #Estimating relative fitness in the control treatment
 control$relfit= control$seedset/mean(control$seedset, na.rm= TRUE)
 ```
+Notice that we scale the traits for each population/treatment/year separately. In the same way as we do for trait standardization, we estimate the relative fitness $w = W/\bar{W}$ for each population, this is dividing individual fitness by its population's mean fitness.
 
 ```{r, fig.height=4, fig.width=14}
 #In the drought treatment (plants in water deficit)
@@ -109,7 +113,7 @@ plot(pol.res$diameter, pol.res$seedset)
 pol.res$relfit= pol.res$seedset/mean(pol.res$seedset, na.rm= TRUE)
 ```
 
-#Opportunity for selection in each treatment
+#Opportunity for selection (variance in relative fitness) in each treatment
 ```{r}
 #In the control treatment
 IC = var(control$relfit, na.rm= TRUE)
@@ -125,7 +129,7 @@ IPR
 
 #Opportunity for selection is higher in the water deficit experimental population
 ```
-#Variance-standardized selection gradients:
+#Multivariate variance-standardized selection gradients:
 
 ```{r}
 #In the control treatment
@@ -133,13 +137,13 @@ m = lm(relfit~ scale(nectar_vl) + scale(nectar_conc)
 + scale(mean_size) + scale(diameter), data= control, na=na.exclude)
 summary(m)$coef
 ```
-We notice that there is linear selection to increase nectar volume (positive sign of the parameter's Estimate) in flowers from control conditions. This is, there is an increase of 9% (nectar vol Estimate= 0.09) in fitness (seed set) per standard deviation increase in nectar volume.
-In addition, we detect selection to increase plant size (stem diameter), this is, larger plants produce more seeds. In this case seed set increased by 6% per standard deviation increase in plant size (stem diameter Estimate= 0.058)
+We notice that there is linear selection to increase nectar volume (positive sign of the parameter's Estimate) in flowers in control conditions. This is, there is an increase of 9% (nectar vol Estimate= 0.09) in plant fitness (seed set) per standard deviation increase in nectar volume.
+In addition, we detect selection to increase plant size (stem diameter), this is, larger plants produce more seeds. In this case seed set increases by 6% per standard deviation increase in plant size (stem diameter Estimate= 0.058)
 
-#Mean-standardized selection gradients:
+#Multivariate mean-standardized selection gradients:
 
 ```{r}
-#We center the traits to the mean (subtract the mean)
+#We center the traits to their mean (subtract the mean)
 #and mean-scale the traits (divide by the mean)
 control$nectar_vl_m = 
   (control$nectar_vl-mean(control$nectar_vl, na.rm=T))/mean(control$nectar_vl, na.rm=T)
@@ -149,28 +153,30 @@ control$mean_size_m =
   (control$mean_size-mean(control$mean_size, na.rm=T))/mean(control$mean_size, na.rm=T)
 control$diameter_m =
   (control$diameter-mean(control$diameter, na.rm = T))/mean(control$diameter, na.rm = T)
+```
 
-#Then we estimate the multivariate linear selection gradients:
+```{r}
+#Then we estimate the mean-scaled multivariate linear selection gradients:
 m.mean = lm(relfit~ nectar_vl_m + nectar_conc_m
 + mean_size_m + diameter_m, data= control, na=na.exclude)
 
 summary(m.mean)$coef
 ```
-In these case the mean-scaled linear selection gradients, $\beta_\mu$, for nectar volume and stem diameter (0.294 vs 0.352) rank differently than variance-scaled linear selection gradients, $\beta_\sigma$ (0.098 vs 0.058)
+We detect selection on the same traits, when we mean-scale the traits, but in this case the mean-scaled selection gradients, $\beta_\mu$, for nectar volume and stem diameter (0.294 vs 0.352) rank differently than variance-scaled gradients, $\beta_\sigma$ (0.098 vs 0.058)
 
-```{r}
 #In the water deficit treatment:
+```{r}
 #Variance-scaled multivariate selection gradients: 
 md = lm(relfit~ scale(nectar_vl) + scale(nectar_conc)
 + scale(mean_size) + scale(diameter), data= drought, na=na.exclude)
 
 summary(md)$coef
 ```
-In contrast to control plants, we observe selection favoring plants with lower nectar volumes (negative sign of the parameter's Estimate) suggesting a cost of nectar rewards in stressful conditions (water deficit). Specifically, fitness decreases by 13% (-0.133) per standard deviation increase in nectar volume. Moreover, selection for lower nectar seems to be a 37.4% stronger under water stress than in controlled conditions ($\beta_\sigma$ for nectar volume in drought= 0.133 vs 0.098 in control). Interestingly, we find strong positive selection on floral size under water deficit (0.250), with an increase of 25% in fitness by a standard deviation increase in flower size.
+In contrast to control plants, we observe selection favoring plants with lower nectar volumes (negative sign of the parameter's Estimate) suggesting a cost of nectar rewards in stressful conditions (water deficit). Specifically, fitness decreases by 13% (-0.133) per standard deviation increase in nectar volume. Interestingly, we find strong positive selection on floral size under water deficit (0.250), with an increase of 25% in fitness by a standard deviation increase in flower size.
 
 #Mean-standardized selection gradients in water deficit:
 ```{r}
-#First we center to the mean and mean-scale the traits:
+#First we center to the mean (subtract) and mean-scale (divide) the traits:
 drought$nectar_vl_m =
   (drought$nectar_vl-mean(drought$nectar_vl, na.rm=T))/mean(drought$nectar_vl, na.rm=T)
 drought$nectar_conc_m = 
@@ -190,7 +196,7 @@ Again, we observed strong selection on flower size, which is stronger than selec
 
 As we have seen, the direction in patterns of selection on nectar volume differ between treatments, with positive directional selection in plants from control conditions contrasting with negative directional selection in plants under water deficit. Selection to increase flower size in water deficit also differs from what we observed in well-watered conditions (control and PR treatments), where we did not detect selection acting on flower size.
 
-To quantify whether the direction and strength of selection varies between treatments we perform analysis of covariance (ANCOVA) in which we compare the means of the selection gradients $\beta$. For this, we need to add the interaction terms between each trait and the variable that represents the different populations or treatments (here "Treatment").
+To estimate whether selection varies between treatments, we perform analysis of covariance (ANCOVA) in which we compare the means of the selection gradients $\beta$ between treatments. For this, we need to add the interaction terms between each trait and the variable that represents the different treatments (here "Treatment").
 ```{r}
 #Estimate relative fitness within each treatment:
 ipo.treat=ipo %>% 
@@ -213,12 +219,14 @@ m.ancova.cd= aov(relfit ~ scale(nectar_vl)+ scale(nectar_conc)
 + scale(mean_size)+ scale(diameter)+ scale(nectar_vl)*Treatment+
 scale(nectar_conc)*Treatment+ scale(mean_size)*Treatment+
   scale(diameter)*Treatment, na= na.exclude, data = ipo.treat.cd)
-
 summary(m.ancova.cd)
 ```
-We can conclude that the direction and strength of linear selection on nectar volume and floral size differed between the control and the water deficit treatment. This is, water deficit changed patterns of selection on floral traits in our study system.
 
-Control vs pol. restriction:
+The ANCOVA indicates that phenotypic selection on nectar volume and floral size differs between the control and the water deficit treatment.
+
+\pagebreak
+
+Control vs poll. restriction:
 ```{r}
 ipo.treat.cpr = ipo.treat %>%
   filter(!Treatment %in% "D") %>% #exclude water deficit treatment for #comparison
@@ -231,11 +239,11 @@ na= na.exclude, data = ipo.treat.cpr)
 
 summary(m.ancova.cpr)
 ```
-In contrast, there were no differences in patterns of selection between well-watered plants with varying access to pollinators (i.e control vs. pollinator restriction)
+In contrast, selection did not differ between well-watered plants with varying access to pollinators (i.e control vs. pollinator restriction treatment)
 
 #ANCOVA on mean-standardized multivariate selection gradients:
 ```{r}
-#Center and scale the traits by their mean within each treatment
+#Another way to center and scale the traits by their mean within each treatment
 ipo.treat= ipo.treat %>% 
   group_by(Treatment)%>%
   mutate(across(c(nectar_vl, nectar_conc, mean_size, diameter),
@@ -253,17 +261,284 @@ m.ancova.cdm= aov(relfit ~ nectar_vl_m+ nectar_conc_m+ mean_size_m+
 diameter_m+ nectar_vl_m*Treatment+ nectar_conc_m*Treatment+ 
   mean_size_m*Treatment+ diameter_m*Treatment,
 na= na.exclude, data = ipo.treat.cd)
+
 summary(m.ancova.cdm)
 ```
+The ANCOVA approach indicates variation in phenotypic selection between the control
+and water deficit treatment. To evaluate the magnitude of variation 
+in phenotypic selection gradients between treatments, we perform the Error-corrected standard deviation of the selection gradients (Albertsen et al. 2021).
+
+#Error-corrected variance of the mean-standardized phenotypic selection gradients:
+
+To further evaluate variation in phenotypic selection between treatments, we follow
+the approach proposed by Albertsen et al (2021) that estimates the mean dispersion of selection gradients.
+
+We start by fitting the multivariate selection model on our set of traits on each treatment separately. We will focus on the comparison between the control and the drought treatment for which we have seen that the ANCOVA test supports variation in patterns of selection.
+
+This time, we will fit the multivariate selection models just on the mean-centered traits (subtracting the trait mean), and later we will estimate the mean-scaled gradients by multiplying the raw model's estimates by the trait means. 
+
+```{r}
+#Control treatment. 
+#Mean-center the traits (subtract the mean trait value)
+control= control %>%
+  mutate(
+    nectar_vl_mean_cent   = nectar_vl - mean(nectar_vl, na.rm = TRUE),
+    nectar_conc_mean_cent = nectar_conc - mean(nectar_conc, na.rm = TRUE),
+    mean_size_mean_cent   = mean_size - mean(mean_size, na.rm = TRUE),
+    diameter_mean_cent    = diameter - mean(diameter, na.rm = TRUE))
+
+```
+
+Fit the multivariate regression (selection) model on the mean-centered traits
+```{r}
+control_mean_mod= lm(relfit~ nectar_vl_mean_cent + nectar_conc_mean_cent
++ mean_size_mean_cent + diameter_mean_cent, data= control, na=na.exclude)
+```
+
+Then we calculate the mean and standard variation for each trait 
+```{r}
+control_mean_traits= control %>% 
+  summarise_at(c("nectar_vl",
+                       "nectar_conc",
+                       "mean_size",
+                       "diameter"), mean,
+               na.rm=TRUE)
+```
+
+Reshape the format with melt function
+```{r, message= FALSE}
+control_mean_traits= melt(control_mean_traits, value.name = "Trait_Mean", variable.name = "Trait")
+control_mean_traits
+```
+
+
+```{r}
+control_sd_traits= control %>% 
+  summarise_at(c("nectar_vl",
+                       "nectar_conc",
+                       "mean_size",
+                       "diameter"), sd,
+               na.rm=TRUE)
+control_sd_traits
+```
+
+```{r, message= FALSE}
+control_sd_traits= melt(control_sd_traits, value.name = "Trait_SD", variable.name = "Trait")
+control_sd_traits
+```
+
+
+```{r}
+control_summary_traits= left_join(control_mean_traits,
+                                                control_sd_traits,
+                                                by = c("Trait" = "Trait"))
+```
+
+Round to four decimals
+```{r}
+control_summary_traits= control_summary_traits %>% 
+  mutate_if(is.numeric, round, digits = 4)
+
+control_summary_traits
+```
+Create a dataframe with the model's information (estimate for each trait, SE and p value).
+
+To get the model's estimates for each trait, we just extract the model coefficients.
+To estimate the standard error (SE) of the model's estimates (Estimate) for each trait, we calculate the standard errors as the square root (sqrt) of the variance, which is the diagonal of the variance-covariance (vcov(model)) matrix of the model.
+
+We only obtain the estimates, SE and p. values, for the traits (model's coefficients[2:5]) and exclude the intercept (model's coefficient[1])
+
+```{r}
+control_betas=
+  data.frame(Trait = c("nectar_vl",
+                       "nectar_conc",
+                       "mean_size",
+                       "diameter"),
+             Estimate = c(control_mean_mod$coefficients[2],
+                          control_mean_mod$coefficients[3],
+                          control_mean_mod$coefficients[4],
+                          control_mean_mod$coefficients[5]),
+             SE_Model = c(sqrt(diag(vcov(control_mean_mod))[2]),
+                          sqrt(diag(vcov(control_mean_mod))[3]),
+                          sqrt(diag(vcov(control_mean_mod))[4]),
+                          sqrt(diag(vcov(control_mean_mod))[5])),
+             p = c(summary(control_mean_mod)$coefficients[2, "Pr(>|t|)"],
+                   summary(control_mean_mod)$coefficients[3, "Pr(>|t|)"],
+                   summary(control_mean_mod)$coefficients[4, "Pr(>|t|)"],
+                   summary(control_mean_mod)$coefficients[5, "Pr(>|t|)"]))
+control_betas
+```
+
+Round to four decimals
+```{r}
+control_betas= control_betas %>% 
+  mutate_if(is.numeric, round, digits = 4)
+control_betas
+```
+
+```{r}
+control_gradients= left_join(control_betas, control_summary_traits,
+                                                     by = c("Trait" = "Trait"))
+control_gradients
+```
+
+#Estimate mean-scaled selection gradients (and their SE) for each trait
+As previously mentioned, we multiply the model raw estimates for each trait (Estimate) by the trait mean in order to estimate the mean-scaled selection gradients.
+```{r}
+control_gradients=  control_gradients %>% 
+  mutate(Mean_Selection_Gradient = round(Estimate* Trait_Mean, digits = 4)) %>% 
+  mutate(Mean_SE_Selection_Gradient = round(SE_Model * Trait_Mean, digits = 4)) %>% 
+  mutate(Treatment = "control")
+
+control_gradients
+```
+
+Now we follow the same steps for the water deficit treatment:
+```{r}
+#Drought treatment. 
+#Mean-center the traits (subtract the mean trait value)
+drought= drought %>%
+  mutate(
+    nectar_vl_mean_cent   = nectar_vl - mean(nectar_vl, na.rm = TRUE),
+    nectar_conc_mean_cent = nectar_conc - mean(nectar_conc, na.rm = TRUE),
+    mean_size_mean_cent   = mean_size - mean(mean_size, na.rm = TRUE),
+    diameter_mean_cent    = diameter - mean(diameter, na.rm = TRUE))
+```
+
+Fit the multivariate selection models on the mean-centered traits
+```{r}
+drought_mean_mod= lm(relfit~ nectar_vl_mean_cent + nectar_conc_mean_cent
++ mean_size_mean_cent + diameter_mean_cent, data= drought, na=na.exclude)
+  
+```
+
+Then we calculate the mean and standard variation for each trait 
+```{r}
+#drought treatment
+drought_mean_traits= drought %>% 
+  summarise_at(c("nectar_vl",
+                       "nectar_conc",
+                       "mean_size",
+                       "diameter"), mean,
+               na.rm=TRUE)
+
+```
+
+```{r, message= FALSE}
+drought_mean_traits= melt(drought_mean_traits, value.name = "Trait_Mean", variable.name = "Trait")
+
+drought_mean_traits
+```
+
+
+```{r, message= FALSE}
+drought_sd_traits= drought %>% 
+  summarise_at(c("nectar_vl",
+                       "nectar_conc",
+                       "mean_size",
+                       "diameter"), sd,
+               na.rm=TRUE)
+drought_sd_traits
+```
+
+
+```{r, message= FALSE}
+drought_sd_traits= melt(drought_sd_traits, value.name = "Trait_SD", variable.name = "Trait")
+drought_sd_traits
+```
+
+
+```{r}
+drought_summary_traits= left_join(drought_mean_traits,
+                                                drought_sd_traits,
+                                                by = c("Trait" = "Trait"))
+```
+
+Round to four decimals
+```{r}
+drought_summary_traits= drought_summary_traits %>% 
+  mutate_if(is.numeric, round, digits = 4)
+
+drought_summary_traits
+```
+
+Create a dataframe with the model information (estimate for each trait, SE and p value)
+```{r}
+drought_betas=
+  data.frame(Trait = c("nectar_vl",
+                       "nectar_conc",
+                       "mean_size",
+                       "diameter"),
+             Estimate = c(drought_mean_mod$coefficients[2],
+                          drought_mean_mod$coefficients[3],
+                          drought_mean_mod$coefficients[4],
+                          drought_mean_mod$coefficients[5]),
+             SE_Model = c(sqrt(diag(vcov(drought_mean_mod))[2]),
+                          sqrt(diag(vcov(drought_mean_mod))[3]),
+                          sqrt(diag(vcov(drought_mean_mod))[4]),
+                          sqrt(diag(vcov(drought_mean_mod))[5])),
+             p = c(summary(drought_mean_mod)$coefficients[2, "Pr(>|t|)"],
+                   summary(drought_mean_mod)$coefficients[3, "Pr(>|t|)"],
+                   summary(drought_mean_mod)$coefficients[4, "Pr(>|t|)"],
+                   summary(drought_mean_mod)$coefficients[5, "Pr(>|t|)"]))
+
+```
+
+Round to four decimals
+```{r}
+drought_betas= drought_betas %>% 
+  mutate_if(is.numeric, round, digits = 4)
+drought_betas
+```
+
+
+```{r}
+drought_gradients= left_join(drought_betas, drought_summary_traits,
+                                                     by = c("Trait" = "Trait"))
+```
+
+#Estimate the mean-scaled selection gradients in the drought treatment:
+```{r}
+drought_gradients=  drought_gradients %>% 
+  mutate(Mean_Selection_Gradient = round(Estimate* Trait_Mean, digits = 4)) %>% 
+  mutate(Mean_SE_Selection_Gradient = round(SE_Model * Trait_Mean, digits = 4)) %>% 
+  mutate(Treatment = "drought")
+
+drought_gradients
+```
+
+
+```{r}
+data_gradients= rbind(control_gradients, drought_gradients)
+data_gradients
+```
+
+##Estimate the error-corrected SD of the Mean selection gradients:
+```{r, warning=FALSE}
+data_gradients_mean_variance= data_gradients %>% 
+  group_by(Trait) %>% 
+  summarise(Variance_Mean_Selection_Gradient = var(Mean_Selection_Gradient),
+            Mean_Mean_SE_Selection_Gradient = mean(Mean_SE_Selection_Gradient^2),
+            Difference = Variance_Mean_Selection_Gradient - Mean_Mean_SE_Selection_Gradient,
+Variance_Corrected_Mean_Selection_Gradient = 
+sqrt(Variance_Mean_Selection_Gradient - Mean_Mean_SE_Selection_Gradient)) %>% 
+  mutate_if(is.numeric, round, digits = 4)
+data_gradients_mean_variance
+```
+We see that in two  out of the four traits (floral size and nectar volume) there is variation in phenotypic selection between the two treatments (control vs drought).
+The magnitude of the variation in selection on floral size was three times (1.205) the magnitude of variation on nectar volume (0.396). In contrast, there is no detectable variation in selection on plant size and nectar concentration beyond sampling error.
+\pagebreak
+
+
 ## Nonlinear selection
 
-##Stabilizing and disruptive selection
+#Stabilizing and disruptive selection
 
-Up to now we have seen different examples on how to measure linear, also known as directional, phenotypic selection. This mode of selection acts by changing the mean trait values in the population (e.g. plants with larger flowers or lower nectar volumes are selected).
-However, there are other modes of selection, where selection acts by changing the phenotypic variance in the population rather than the mean. For instance, selection might favor those individuals with trait values closer to the average phenotype (they will have higher fitness) while individuals with trait values close to the extremes of the distribution will show lower fitness values. This mode of selection is known as $stabilizing$ $selection$ and it acts decreasing the phenotypic variance in the population. 
-In contrast to stabilizing selection, selection might favor those individuals with extreme trait values (close to the tails of the trait distribution) acting against average individuals. This case of nonlinear selection is called $disruptive$ $selection$ and increases the phenotypic variance. 
+Up to now we have seen different examples of linear, also known as directional, phenotypic selection. This mode of selection acts by changing the mean trait values in the population (e.g. plants with larger flowers or lower nectar volumes are selected).
+However, there are other modes of selection, where selection acts by changing the phenotypic variance in the population rather than the mean. For instance, selection may favor those individuals with trait values closer to the average phenotype (they will have higher fitness), while individuals with trait values close to the extremes of the distribution will show lower fitness values. This mode of selection is known as $stabilizing$ $selection$ and it acts decreasing the phenotypic variance in the population. 
+In contrast to stabilizing selection, selection may favor those individuals with extreme trait values (close to the tails of the trait distribution) acting against average individuals. This case of nonlinear selection is called $disruptive$ $selection$ and increases the phenotypic variance in the population.
 
-In both cases we will need curve-fitting approaches to describe the selection surface (the relationship between the individuals phenotypic trait values and fitness). The regression approach by Lande and Arnold (1983) also allow us to quantify nonlinear phenotypic selection gradients by applying second‐order polynomial regression. For this, we add a quadratic term to the regression model of relative fitness on phenotype, which can be written as:
+In both cases, we will need curve-fitting approaches to describe the selection surface (the relationship between the individuals phenotypic trait values and fitness). The regression approach by Lande and Arnold (1983) also allow us to quantify nonlinear phenotypic selection gradients by applying second‐order polynomial regression. For this, we add a quadratic term to the regression model of relative fitness on phenotype, which can be written as:
 
 $w = \alpha + \sum_{i} z_i\beta_i + 1/2 \sum_{i} z_i^2\gamma_i+ \epsilon_i$
 
@@ -272,76 +547,26 @@ The 1/2 factor is used to make the quadratic terms equivalent to second derivati
 
 The quadratic regression terms $\gamma_i$'s are used to measure nonlinear selection.$\gamma_i$'s <0 indicate stabilizing selection while $\gamma_i$'s >0 indicate disruptive selection. It is important to notice that to obtain the nonlinear selection gradients, we need to double the resulting quadratic regression coefficients, $\gamma_i$, as well as their standard error (Stinchcombe et al. 2008)
 
-\pagebreak
+#Correlational selection
 
-We will continue with the example on $Ipomoea$ $purpurea$ to quantify nonlinear quadratic selection. We will focus on plants in the control treatment, as sample sizes in the drought and pollinator restriction were too small to quantify nonlinear selection (to include quadratic terms to the regression model). 
-
-To add the quadratic terms to the model, we need to square the traits values:
-```{r}
-#We first variance-scale the traits (here with "scale" function)
-#and then we square (^2) the traits:
-control= control %>% 
-mutate(across(c(nectar_vl, nectar_conc, mean_size, diameter),
-              ~(scale(.)), .names= "{col}_s"))%>%
-mutate(across(c(nectar_vl_s, nectar_conc_s, mean_size_s, diameter_s),
-              ~ (.x^2), .names= "{col}q"))
-```
-#Fit univariate variance-scaled nonlinear selection gradients:
-```{r, echo=FALSE}
-#For flower nectar volume
-m= lm(relfit~ nectar_vl_s+ nectar_vl_sq, na= na.exclude, data= control)
-summary(m)$coef
-
-#For flower mean size
-summary(lm(relfit~ mean_size_s+ mean_size_sq, na= na.exclude, data= control))$coef
-
-#For plant diameter
-summary(lm(relfit~ diameter_s+ diameter_sq, na= na.exclude, data= control))$coef
-```
-There is stabilizing selection on flower size (mean_size_sq= -0.06).
-
-Let's see what happens when we account for indirect effects of selection acting on other correlated traits:
-
-#Fit multivariate variance-scaled nonlinear selection gradients:
-```{r}
-m= lm(relfit~ nectar_vl_s+ nectar_vl_sq + 
-        nectar_conc_s+ nectar_conc_sq+ mean_size_s+ mean_size_sq
-      + diameter_s+ diameter_sq, na= na.exclude, data= control)
-summary(m)$coef
-```
-There is still (marginally significant) stabilizing (Estimate= -0.047) selection on flower size.
-
-To obtain the nonlinear selection gradient $\gamma_i$, we need to double the quadratic regression coefficient and its standard error (Stinchcombe et al. 2008).
-
-```{r}
-gamma_meansize= summary(m)$coef[7]*2
-gamma_meansize
-SE= 0.026*2
-SE
-
-```
-$\gamma$ for mean flower size is = -0.094 (+/- 0.052)
-
-
-
-## Correlational selection
-
-In some cases, selection may favor individuals with specific combinations of trait values (Phillips and Arnold 1989). This mode of selection is known as correlational selection and implies that selection on one trait depends on the value of another trait. 
-Once again we can use Lande and Arnold's regression approach to quantify correlational selection. To do that we add the cross-product terms $\gamma_{i,j}$ for each pair of traits to the regression model with the linear and the quadratic regression terms. For two traits $z_i$ and $z_j$ the model can be written as:
+Another example of nonlinear selection is correlational selection, in which individuals with specific combinations of trait values  show higher fitness (Phillips and Arnold 1989). This mode of selection is known as correlational selection and implies that selection on one trait depends on the value of another trait. 
+Once again, we can use Lande and Arnold's regression approach to quantify correlational selection. To do that we add the cross-product terms $\gamma_{i,j}$ for each pair of traits to the regression model with the linear and the quadratic regression terms. For two traits $z_i$ and $z_j$ the model can be written as:
 
 $w = \alpha + z_i\beta_i+ z_j\beta_j+ 1/2 z_i^2\gamma_{i,i}+ 1/2 z_j^2\gamma_{j,j}+ z_iz_j\gamma_{i,j}+ \epsilon$
 
 where $\gamma_{i,j}$ denotes the correlational selection gradient for traits $z_i$ and $z_j$
 
+To explore nonlinear selection, we will use a dataset from a study by Campbell et al. (2022) on $Ipomopsis$
+
 ## Exercise 2: Selection by pollinators and seed predators on floral traits in two *Ipomopsis* species.
 
-In this work by Dianne Campbell and collaborators (Campbell et al. 2022), they investigated linear and nonlinear phenotypic selection acting on a set of floral traits, including floral size-related traits, nectar, color and scent, in two species of $Ipomopsis$ (pollinated by hummingbirds and hawk moths) and their hybrids during two different stages of the plant's life cycle which are: 1) pollination (i.e. seeds initiated) and 2) seed predation (proportion of fruits escaping fly predation).
+In this work by Dianne Campbell et al. (Campbell et al. 2022), they investigated linear and nonlinear phenotypic selection acting on a set of floral traits, including floral size-related traits, nectar, color and scent, in two species of $Ipomopsis$ (pollinated by hummingbirds and hawk moths) and their hybrids during two different stages of the plant's life cycle which are: 1) pollination (i.e. seeds initiated) and 2) seed predation (proportion of fruits escaping fly predation).
 
 Previous work on this system has shown that certain traits are under directional selection by pollinators and seed predators. Based on this knowledge, here they tested several predictions in which correlational selection may arise as the effect of combining directional selection by both pollinators and seed predators.
 
 Here, we will focus on $I.$ $aggregata$ and three traits (floral width, color and nectar production) for which sample sizes are large enough to test for linear, quadratic and correlational selection through  multivariate regression following Lande and Arnold's approach.
 ```{r}
-camp22<-read.csv("Campbell_etal_22.csv")
+camp22= read.csv("Campbell_etal_22.csv")
 names(camp22)
 camp22$Site= as.factor(camp22$Site)
 camp22$Type= as.factor(camp22$Type)
@@ -404,39 +629,43 @@ summary(m)$coef
 ```
 Mean-standardized multivariate selection gradients also show strong directional selection on flower width (positive) and floral color (negative), with both $\beta_\mu$'s >1 (3.86 and -1.25) which are stronger than selection on fitness as a trait.
 
-#Estimating multivariate quadratic selection gradients:
+#Estimating multivariate nonlinear selection gradients (quadratic and interaction terms):
+We fit one model with:
+Linear terms: linear selection
+Quadratic terms: stabilizing and disruptive selection
+Interaction terms for each pair of traits: correlational selection
 
+To add the quadratic terms to the model, we need to square the traits values:
 ```{r}
-#Variance-scale and square the traits
+#We first variance-scale the traits (here with "scale" function= variance-scaled traits)
+#and then we square (^2) the traits:
+
 aggre= aggre %>% 
   mutate(across(c(width, color, nectar),  ~(scale(.)), .names= "{col}_s")) %>%
 mutate(across(c(width_s, color_s, nectar_s),  ~ .x^2, .names= "{col}q"))
-
-#Fit the quadratic regression model:
-m = lm(relfit.pol~ width_s + color_s+ nectar_s+ width_sq+ color_sq+ nectar_sq,
-       na= na.exclude, data= aggre)
-summary(m)$coef
-
 ```
-Disruptive selection (color_sq$coeff= 0.14 >0) on floral color.
-To estimate the quadratic selection gradient $\gamma_i$ we double the quadratic
-regression coefficient and the standard error for flower color:
-```{r}
-gamma_color =summary(m)$coef[6, 1]*2
-SE= 0.075*2
-```
-##Measuring correlational selection:
 
-#Variance-scaled multivariate nonlinear selection gradients
-Include the two-way interaction terms for each pair of traits to test for correlational selection
+#Variance-scale multivariate nonlinear selection gradrients
 ```{r}
 m = lm(relfit.pol~ width_s + color_s+ nectar_s+
          width_sq + color_sq+ nectar_sq+
   width_s*color_s+ width_s*nectar_s+  color_s*nectar_s, 
   na= na.exclude, data= aggre)
 summary(m)$coef
+
 ```
-There is negative correlational selection ($\gamma_i,_j$= -0.512) acting on flower width and color. Selection favors plants with wide flowers when flowers are pale in color.
+There is Disruptive selection on floral color (color_sq$coeff= 0.27 >0)
+To estimate the quadratic selection gradient $\gamma_i$ we double the quadratic regression coefficient and the standard error for flower color:
+
+```{r}
+gamma_color =summary(m)$coef[6, 1]*2
+SE= 0.091*2
+
+gamma_color
+#gamma for floral color= 0.55 (0.18)
+```
+
+The model also indicates negative correlational selection ($\gamma_i,_j$= -0.512) acting on flower width and color. This, selection favors plants with wide flowers when flowers are pale in color.
 
 #Mean-scaled multivariate nonlinear selection gradients:
 ```{r}
